@@ -1,7 +1,7 @@
 package com.zzq.controller;
 
 import com.zzq.model.City;
-import com.zzq.service.CityService;
+import com.zzq.service.impl.CityService;
 import model.PageResult;
 import model.Result;
 import model.StatusCode;

@@ -1,7 +1,7 @@
 package com.zzq.controller;
 
 import com.zzq.model.Label;
-import com.zzq.service.LabelService;
+import com.zzq.service.impl.LabelService;
 import model.PageResult;
 import model.Result;
 import model.StatusCode;
@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**

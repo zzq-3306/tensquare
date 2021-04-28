@@ -2,11 +2,16 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/tensquare-recruit/tensquare-recruit.iml" filepath="$PROJECT_DIR$/tensquare-recruit/tensquare-recruit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tensquare_article/tensquare_article.iml" filepath="$PROJECT_DIR$/tensquare_article/tensquare_article.iml" />
       <module fileurl="file://$PROJECT_DIR$/tensquare_base/tensquare_base.iml" filepath="$PROJECT_DIR$/tensquare_base/tensquare_base.iml" />
       <module fileurl="file://$PROJECT_DIR$/tensquare_common/tensquare_common.iml" filepath="$PROJECT_DIR$/tensquare_common/tensquare_common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tensquare_enterprise/tensquare_enterprise.iml" filepath="$PROJECT_DIR$/tensquare_enterprise/tensquare_enterprise.iml" />
       <module fileurl="file://$PROJECT_DIR$/tensquare_eureka/tensquare_eureka.iml" filepath="$PROJECT_DIR$/tensquare_eureka/tensquare_eureka.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tensquare_friend/tensquare_friend.iml" filepath="$PROJECT_DIR$/tensquare_friend/tensquare_friend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tensquare_gathering/tensquare_gathering.iml" filepath="$PROJECT_DIR$/tensquare_gathering/tensquare_gathering.iml" />
       <module fileurl="file://$PROJECT_DIR$/tensquare_parent/tensquare_parent.iml" filepath="$PROJECT_DIR$/tensquare_parent/tensquare_parent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tensquare_qa/tensquare_qa.iml" filepath="$PROJECT_DIR$/tensquare_qa/tensquare_qa.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tensquare_spit/tensquare_spit.iml" filepath="$PROJECT_DIR$/tensquare_spit/tensquare_spit.iml" />
       <module fileurl="file://$PROJECT_DIR$/tensquare_user/tensquare_user.iml" filepath="$PROJECT_DIR$/tensquare_user/tensquare_user.iml" />
     </modules>
   </component>

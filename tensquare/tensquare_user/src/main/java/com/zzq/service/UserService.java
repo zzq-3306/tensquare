@@ -1,52 +1,116 @@
 package com.zzq.service;
 
-import com.zzq.mapper.UserMapper;
+import com.zzq.model.Follow;
 import com.zzq.model.Login;
 import com.zzq.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author Zhang zq
- * @Date 2021/4/23 14:52
+ * @Date 2021/4/24 11:46
  * @Description
  */
-@Service
-public class UserService {
-
-    @Autowired
-    private UserMapper userMapper;
+public interface UserService {
 
     /**
      * 添加用户信息
      * @param user  用户信息
      */
-    public void add(User user){
-        userMapper.save(user);
-    }
+     void add(User user);
 
     /**
      * 查询全部用户信息
-     * @return   返回结果集
+     * @return
      */
-    public List<User> queryAll(){
-        return userMapper.findAll();
-    }
+     List<User> queryAll();
 
     /**
      * 用户登陆查询
      * @param login
      * @return
      */
-    public User queryByLogin(Login login) {
-        return userMapper.queryByLogin(login);
-    }
+     User queryByLogin(Login login);
+
+
+    /**
+     * 根据用户id查询用户信息
+     * @param userId   用户id
+     * @return     返回状态信息
+     */
+     User queryById(String userId);
+
+    /**
+     * 修改用户信息
+     * @param user       用户的信息
+     * @return         返回状态信息
+     */
+     User update(User user);
+
+    /**
+     * 根据用户id删除信息
+     * @param userId    用户id
+     * @return      返回状态信息
+     */
+     void delete(String userId);
+
+    /**
+     * 显示用户带条件查询并分页
+     * @param searchMap    搜索条件
+     * @param page         当前页
+     * @param size          页面大小
+     * @return           返回状态信息
+     */
+    Page<User> queryLikeAndPage(Map searchMap, int page, int size);
+
+    /**
+     * 关注用户根据用户id
+     * @param userId  用户id
+     */
+    int updateById(String userId);
+
+    /**
+     * 修改tb_follow表
+     * @param userid    关注和被关注的对象
+     * @param targetuser    关注和被关注的对象
+     * @return      返回状态信息
+     */
+    int addFollow(Follow follow);
+//    int updateFollow(String userid,String targetuser);
+
+    /**
+     * 删除用户关注
+     * @param userId   用户的id
+     * @return      返回状态信息
+     */
+    int deleteFollowById(String userId);
+
+
+    /**
+     * 删除tb_follow中的关注信息
+     */
+    int deleteFollow(Follow follow);
+
+    /**
+     * 查询我的粉丝
+     * @param id  我的Id
+     * @return  返回结果list
+     */
+    List<User> queryFansById(String id);
+
+    /**
+     * 查询我的关注  根据我的id
+     * @param id   我的id
+     * @return    返回查询到的结果集
+     */
+    List<User> queryFollowById(String id);
+
+    /**
+     * 查询我的关注列表ID
+     * @param id   我的id
+     * @return      返回列表id集合   List
+     */
+    List<String> queryMyFollowId(String id);
 }
