@@ -16,10 +16,18 @@ import java.util.Map;
 public interface UserService {
 
     /**
+     * 发送邮箱验证   在redis中设置过期时间   并发送到rabbitmq中
+     * @param email   邮箱
+     */
+    String sendEmail(String email);
+
+
+    /**
      * 添加用户信息
      * @param user  用户信息
+     * @param code  用户输入的验证码
      */
-     void add(User user);
+     void add(User user,String code);
 
     /**
      * 查询全部用户信息
@@ -113,4 +121,10 @@ public interface UserService {
      * @return      返回列表id集合   List
      */
     List<String> queryMyFollowId(String id);
+
+    /**
+     * 添加用户
+     * @param user  用户信息
+     */
+    void insert(User user);
 }

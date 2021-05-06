@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -30,11 +31,23 @@ public class AdminServiceImpl implements AdminService {
     private AdminMapper adminMapper;
 
     /**
+     * 密码加密
+     */
+    @Autowired
+    private BCryptPasswordEncoder encoder;
+
+    /**
      * 添加管理员
      * @param admin  管理员信息
      */
     @Override
     public void add(Admin admin) {
+
+        //密码加密
+        String newPassword = encoder.encode(admin.getPassword());
+        System.out.println("newPassword = " + newPassword);
+        admin.setPassword(newPassword);
+
         adminMapper.save(admin);
     }
 
@@ -97,7 +110,16 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public Admin queryByNameAndPassword(AdminLogin login) {
-        return adminMapper.queryOne(login);
+        Admin admin = adminMapper.queryByLoginname(login.getLoginname());
+
+        System.out.println("用户登陆输入的密码: "+login.getPassword());
+        System.out.println("数据库查询到的密码: "+admin.getPassword());
+        System.out.println(encoder.matches(login.getPassword(),admin.getPassword()));
+
+        if (admin != null && encoder.matches(login.getPassword(),admin.getPassword())){
+            return admin;
+        }
+        return null;
     }
 
     /**

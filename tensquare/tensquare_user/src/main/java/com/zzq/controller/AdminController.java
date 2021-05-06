@@ -8,9 +8,12 @@ import model.Result;
 import model.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import util.JwtUtil;
 
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +28,12 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 添加管理员
@@ -73,7 +82,7 @@ public class AdminController {
 
     /**
      * 根据id删除管理员
-     * @param id   管理员id
+     * @param adminId   管理员id
      * @return      返回状态信息  是否成功
      */
     @DeleteMapping("/{adminId}")
@@ -102,11 +111,15 @@ public class AdminController {
      * @return     返回状态信息
      */
     @PostMapping("/login")
-    public Result login(@RequestBody AdminLogin login, HttpSession session){
+    public Result login(@RequestBody AdminLogin login){
         Admin admin = adminService.queryByNameAndPassword(login);
         if (admin != null){
-            session.setAttribute("loginAdmin",admin);
-            return new Result(true,StatusCode.OK,"successful operation");
+            String token = jwtUtil.createJWT(admin.getId(), admin.getLoginname(), "admin");
+            Map hashMap = new HashMap<>();
+            hashMap.put("token",token);
+            hashMap.put("name",admin.getLoginname());
+            redisTemplate.opsForValue().set("loginAdmin",admin);
+            return new Result(true,StatusCode.OK,"successful operation",hashMap);
         }
         return new Result(false,StatusCode.ERROR,"fail operation");
     }

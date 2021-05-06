@@ -11,20 +11,20 @@ import util.JwtUtil;
 
 @SpringBootApplication
 @EnableEurekaClient
-//@EnableDiscoveryClient
-//@EnableFeignClients
+@EnableDiscoveryClient
+@EnableFeignClients
 public class TensquareFriendApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(TensquareFriendApplication.class, args);
 	}
 
-//	@Bean
+	@Bean
 	public IdWorker idWorker(){
 		return new IdWorker(1,1);
 	}
 
-//	@Bean
+	@Bean
 	public JwtUtil jwtUtil(){
 		return new JwtUtil();
 	}

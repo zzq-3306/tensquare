@@ -1,37 +1,39 @@
 package com.zzq.mapper;
 
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Update;
+import com.zzq.model.Friend;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.DeleteMapping;
+
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
 
 /**
  * @Author Zhang zq
  * @Date 2021/4/27 17:02
  * @Description
  */
-@Mapper
-@Repository
-public interface FriendMapper  {
+public interface FriendMapper  extends JpaRepository<Friend,String> {
 
     /**
-     * 添加好友或者非好友
-     * @param friendid  友好或非好友的id
-     * @param type      1 喜欢      2不喜欢
-     * @return      返回状态信息
+     * 根据用户id和被关注用户的id查询记录个数
+     * @param userid   用户id
+     * @param friendid  被关注的id
+     * @return          返回记录数
      */
-    @Update("insert into tb_friend values(#{userid},#{id},#{type})")
-    int add(@Param("userid") String userid ,@Param("id") String friendid, @Param("type") String type);
+    @Query("select count(f) from Friend f where f.userid = ?1 and f.friendid = ?2")
+    int selectCount(String userid,String friendid);
 
 
     /**
-     * 删除好友
-     * @param friendid  好友的id
-     * @return      返回状态信息
+     * 更新为互相喜欢
+     * @param userid
+     * @param friendid
+     * @param islike
      */
-    @Delete("delete from tb_friend where friendid = #{id}")
-    int deleteByFriendId(@Param("id") String friendid);
+    @Modifying
+    @Query("update Friend f set f.islike=?3 where f.userid=?1 and f.friendid=?2")
+    void updateLike(String userid ,String friendid ,String islike);
+
+
 }

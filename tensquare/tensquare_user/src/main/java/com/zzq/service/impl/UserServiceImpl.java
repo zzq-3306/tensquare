@@ -1,20 +1,21 @@
 package com.zzq.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.zzq.mapper.FollowMapper;
 import com.zzq.model.Follow;
 import com.zzq.mapper.UserMapper;
 import com.zzq.model.Login;
 import com.zzq.model.User;
 import com.zzq.service.UserService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import redis.clients.jedis.Jedis;
-import util.JedisPoolUtil;
+
 
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -22,9 +23,8 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author Zhang zq
@@ -40,13 +40,70 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private FollowMapper followMapper;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    /**
+     * 密码加密
+     */
+    @Autowired
+    private BCryptPasswordEncoder encoder;
+
+
+    /**
+     * 发送邮箱验证   在redis中设置过期时间   并发送到rabbitmq中
+     * @param email   邮箱
+     */
+    @Override
+    public String sendEmail(String email){
+        //生成6位短信验证码
+        Random random = new Random();
+        int max = 999999;
+        int min = 100000;
+        int code = random.nextInt(max);
+        if (code<min){
+            code=code+min;
+        }
+        System.out.println(email+"收到的验证码是: "+code);
+
+        //将验证码放入redis  保证key唯一的情况下  设置5分钟过期
+        redisTemplate.opsForValue().set("code_"+email,code+"",5, TimeUnit.MINUTES);
+
+        //将手机号和验证码发送到rabbitmq中
+        HashMap<String, String> hashMap = new HashMap<>();
+        hashMap.put("email",email);
+        hashMap.put("code",code+"");
+        rabbitTemplate.convertAndSend("code",hashMap);
+        return code+"";
+    }
+
+
+
+
+
+
+
     /**
      * 添加用户信息
      * @param user  用户信息
+     * @param code  用户输入的验证码
      */
     @Override
-    public void add(User user){
-        userMapper.save(user);
+    public void add(User user,String code){
+        String sysCode = (String) redisTemplate.opsForValue().get("code_" + user.getEmail());
+        System.out.println("redis中的code: "+sysCode);
+        System.out.println("用户输入的的code: "+code);
+
+        if (code != null && code.equals(sysCode)){
+            //加密后的新密码
+            String newPassword = encoder.encode(user.getPassword());
+            System.out.println("newPassword = " + newPassword);
+            user.setPassword(newPassword);
+            userMapper.save(user);
+        }
     }
 
     /**
@@ -65,38 +122,61 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User queryByLogin(Login login) {
-        User user = null;
-        ObjectMapper objectMapper = new ObjectMapper();
-        //获得一个redis连接
-        Jedis jedis = JedisPoolUtil.getJedis();
-        String loginUser = jedis.get("loginUser");
-        if (loginUser!=null){
-            //说明redis中有登陆人的信息
-            try {
 
-                //字符串转换对象
-                return objectMapper.readValue(loginUser,User.class);
-            } catch (Exception e) {
-                e.printStackTrace();
+        User redisUser = (User) redisTemplate.opsForValue().get("loginUser");
+        if (redisUser != null){
+
+            //判断密码是否相同
+            if (encoder.matches(login.getPassword(),redisUser.getPassword())){
+                System.out.println("使用redisTemplate的方法从redis中查到了user信息...");
+                return redisUser;
             }
-        }else {
-            //说明redis中没有登陆人的信息  需要查询数据库
-            user = userMapper.queryByLogin(login);
-            System.out.println("mysql.user = " + user);
-            if (user != null){
-                //将mysql查询到的信息放到redis中
-                try {
-                    String jsonUser = objectMapper.writeValueAsString(user);
-                    jedis.set("loginUser",jsonUser);
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("从数据库中查到了登陆人的信息...");
+            return null;
+
+
+        }else{
+            User user = userMapper.queryByMobile(login.getMobile());
+            if (user != null && encoder.matches(login.getPassword(),user.getPassword())){
+                System.out.println("使用redisTemplate的方法从mysql中查到了user信息...");
                 return user;
             }
         }
-        System.out.println("redis和mysql都为查询到信息...");
-        return user;
+        System.out.println("使用redisTemplate的方法从redis和mysql中 都未 查到了user信息...");
+        return null;
+
+
+//        User user = null;
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        //获得一个redis连接
+//        Jedis jedis = JedisPoolUtil.getJedis();
+//        String loginUser = jedis.get("loginUser");
+//        if (loginUser!=null){
+//            //说明redis中有登陆人的信息
+//            try {
+//
+//                //字符串转换对象
+//                return objectMapper.readValue(loginUser,User.class);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }else {
+//            //说明redis中没有登陆人的信息  需要查询数据库
+//            user = userMapper.queryByLogin(login);
+//            System.out.println("mysql.user = " + user);
+//            if (user != null){
+//                //将mysql查询到的信息放到redis中
+//                try {
+//                    String jsonUser = objectMapper.writeValueAsString(user);
+//                    jedis.set("loginUser",jsonUser);
+//                } catch (JsonProcessingException e) {
+//                    e.printStackTrace();
+//                }
+//                System.out.println("从数据库中查到了登陆人的信息...");
+//                return user;
+//            }
+//        }
+//        System.out.println("redis和mysql都为查询到信息...");
+//        return user;
     }
 
     /**
@@ -221,6 +301,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<String> queryMyFollowId(String id) {
         return followMapper.queryMyFollowId(id);
+    }
+
+    /**
+     * 添加用户
+     * @param user  用户信息
+     */
+    @Override
+    public void insert(User user) {
+        //加密后的新密码
+        String newPassword = encoder.encode(user.getPassword());
+        System.out.println("newPassword = " + newPassword);
+        user.setPassword(newPassword);
+
+        userMapper.save(user);
     }
 
     /**

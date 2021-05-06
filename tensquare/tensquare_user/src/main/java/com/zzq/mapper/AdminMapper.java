@@ -15,9 +15,8 @@ public interface AdminMapper extends JpaRepository<Admin,String>, JpaSpecificati
 
     /**
      * 管理员登陆
-     * @param login  管理员登陆的信息
+     * @param loginname  管理员登陆的名字
      * @return     返回状态信息
      */
-    @Query(value = "select * from tb_admin where loginname=:#{#login.loginname} and password =:#{#login.password}",nativeQuery = true)
-    Admin queryOne(AdminLogin login);
+    Admin queryByLoginname(String loginname);
 }

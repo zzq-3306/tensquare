@@ -1,7 +1,9 @@
 package com.zzq.controller;
 
+import com.zzq.client.LabelClient;
 import com.zzq.model.Problem;
 import com.zzq.service.ProblemService;
+import io.jsonwebtoken.Claims;
 import model.PageResult;
 import model.Result;
 import model.StatusCode;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +27,25 @@ public class ProblemController {
     @Autowired
     private ProblemService problemService;
 
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private LabelClient labelClient;
+
+    /**
+     * 根据标签的id查询标签的信息
+     * @param labelid   标签的id
+     * @return          返回结果集
+     */
+    @RequestMapping("/label/{labelid}")
+    public Result findLabelById(@PathVariable String labelid){
+        Result result = labelClient.findById(labelid);
+        return result;
+    }
+
+
+
     /**
      * 添加问题
      * @param problem  问题信息
@@ -31,6 +53,12 @@ public class ProblemController {
      */
     @PostMapping()
     public Result addProblem(@RequestBody Problem problem){
+        Claims claims = (Claims) request.getAttribute("user_claims");
+        if (claims == null){
+            return new Result(false, StatusCode.ACCESSERROR,"无权访问");
+        }
+
+        problem.setId(claims.getId());
         problemService.addProblem(problem);
         return new Result(true, StatusCode.OK,"成功");
     }

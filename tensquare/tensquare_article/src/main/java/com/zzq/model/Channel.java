@@ -1,8 +1,8 @@
 package com.zzq.model;
 
-import javax.persistence.Entity;
+import org.springframework.data.elasticsearch.annotations.Document;
+
 import javax.persistence.Id;
-import javax.persistence.Table;
 import java.io.Serializable;
 
 /**
@@ -10,12 +10,11 @@ import java.io.Serializable;
  * @Date 2021/4/28 20:45
  * @Description
  */
-@Entity
-@Table(name = "tb_channel")
+@Document(indexName = "tensquare",type = "channel")
 public class Channel implements Serializable {
 
     @Id
-    private String Id;
+    private String id;
 
     private String name;
 
@@ -24,28 +23,40 @@ public class Channel implements Serializable {
     @Override
     public String toString() {
         return "Channel{" +
-                "Id='" + Id + '\'' +
+                "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", state='" + state + '\'' +
                 '}';
     }
 
     public Channel(String id, String name, String state) {
-        Id = id;
+        this.id = id;
         this.name = name;
         this.state = state;
     }
 
     public String getId() {
-        return Id;
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getState() {
         return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public Channel() {

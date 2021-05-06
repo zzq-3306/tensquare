@@ -1,5 +1,8 @@
 package com.zzq.model;
 
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -10,8 +13,9 @@ import java.io.Serializable;
  * @Date 2021/4/28 20:49
  * @Description
  */
-@Entity
-@Table(name = "tb_article")
+@Document(indexName = "tensquare",type = "article")
+//@Entity
+//@Table(name = "tb_article")
 public class Article implements Serializable {
 
     @Id
@@ -19,7 +23,17 @@ public class Article implements Serializable {
 
     private String columnid;
     private String userid;
+
+    /**
+     * 标题
+     */
+    @Field(index = true,analyzer = "ik_max_word",searchAnalyzer = "ik_max_word")
     private String title;
+
+    /**
+     * 文章正文
+     */
+    @Field(index = true,analyzer = "ik_max_word",searchAnalyzer = "ik_max_word")
     private String content;
     private String image;
     private String createtime;

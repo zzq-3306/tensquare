@@ -21,11 +21,10 @@ public interface UserMapper extends JpaRepository<User,String>, JpaSpecification
 
     /**
      * 查询登陆用户
-     * @param login   登陆用户信息
+     * @param mobile   登陆用户信息
      * @return    返回登陆用户信息
      */
-    @Query(value = "select * from tb_user  where mobile=:#{#login.mobile} and password = :#{#login.password}",nativeQuery = true)
-    User queryByLogin(Login login);
+    User queryByMobile(String mobile);
 
     /**
      * 根据用户id修改follow   关注用户

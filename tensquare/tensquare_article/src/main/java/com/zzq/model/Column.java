@@ -1,8 +1,8 @@
 package com.zzq.model;
 
-import javax.persistence.Entity;
+import org.springframework.data.elasticsearch.annotations.Document;
+
 import javax.persistence.Id;
-import javax.persistence.Table;
 import java.io.Serializable;
 
 /**
@@ -10,8 +10,7 @@ import java.io.Serializable;
  * @Date 2021/4/28 20:46
  * @Description
  */
-@Entity
-@Table(name = "tb_column")
+@Document(indexName = "tensquare",type = "column")
 public class Column implements Serializable {
 
     @Id

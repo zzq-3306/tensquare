@@ -8,17 +8,10 @@ package com.zzq.service;
 public interface FriendService {
 
     /**
-     * 添加好友或者非好友
-     * @param friendid  友好或非好友的id
-     * @param type      1 喜欢      2不喜欢
-     * @return      返回状态信息
+     * 添加好友
+     * @param userid      用户id
+     * @param friendid     被关注的用户id
+     * @return
      */
-    int add(String friendid, String type);
-
-    /**
-     * 删除好友
-     * @param friendid  好友的id
-     * @return      返回状态信息
-     */
-    int deleteByFriendId(String friendid);
+    int addFriend(String userid,String friendid);
 }

@@ -40,6 +40,7 @@ public class LabelController{
      */
     @GetMapping(value = "/{id}")
     public Result queryById(@PathVariable String id){
+        System.out.println("3.......................");
         return new Result(true,StatusCode.OK,"查询成功",labelService.queryById(id));
     }
 

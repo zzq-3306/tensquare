@@ -5,19 +5,21 @@ import com.zzq.model.Follow;
 import com.zzq.model.Login;
 import com.zzq.model.User;
 import com.zzq.service.UserService;
+import io.jsonwebtoken.Claims;
 import model.PageResult;
 import model.Result;
 import model.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.Jedis;
-import util.JedisPoolUtil;
-import util.SendCode;
-import util.TimeCastHandler;
+import util.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,15 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private HttpServletRequest request;
+
     /**
      * 添加用户
      * @param user 用户信息
@@ -40,7 +51,6 @@ public class UserController {
      */
     @PostMapping()
     public Result add(@RequestBody User user){
-        System.out.println("user = " + user);
 
         if (user.getBirthday()!=null && !"".equals(user.getBirthday())){
             user.setBirthday(TimeCastHandler.strCastdateTime(user.getBirthday()));
@@ -55,7 +65,7 @@ public class UserController {
             user.setLastdate(TimeCastHandler.strCastdateTime(user.getLastdate()));
         }
 
-        userService.add(user);
+        userService.insert(user);
         return new Result(true, StatusCode.OK,"添加成功");
     }
 
@@ -69,21 +79,32 @@ public class UserController {
     }
 
     /**
-     * 用户登陆查询
+     * 用户登陆
      * @param login  登陆人手机号和密码
      * @return       返回状态信息
      */
     @PostMapping("/login")
-    public Result queryLogin(@RequestBody Login login, HttpSession session){
-        System.out.println("login = " + login);
+    public Result queryLogin(@RequestBody Login login){
+
         User user = userService.queryByLogin(login);
         System.out.println("user = " + user);
+
         if (user != null){
+
+            //创建用户的token
+            String token = jwtUtil.createJWT(user.getId(), user.getMobile(), "user");
+            Map hashMap = new HashMap<>();
+            //添加token信息
+            hashMap.put("token",token);
+            //登陆人昵称
+            hashMap.put("name",user.getNickname());
+            //登陆人头像
+            hashMap.put("avatar",user.getAvatar());
             System.out.println("LoginUser = " + user);
-            session.setAttribute("loginUser",user);
-            return new Result(true,StatusCode.OK,"查询成功");
+            redisTemplate.opsForValue().set("loginUser",user);
+            return new Result(true,StatusCode.OK,"查询成功",hashMap);
         }
-        return new Result(true,StatusCode.OK,"查询失败");
+        return new Result(false,StatusCode.LOGINERROR,"用户名或者密码错误");
     }
 
     /**
@@ -94,8 +115,61 @@ public class UserController {
      */
     @PostMapping("/register/{code}")
     public Result registrUser(@RequestBody User user,@PathVariable String code){
-        return null;
+        
+        if (user.getBirthday()!=null && !"".equals(user.getBirthday())){
+            user.setBirthday(TimeCastHandler.strCastdateTime(user.getBirthday()));
+        }
+        if (user.getRegdate()!=null && !"".equals(user.getRegdate())){
+            user.setRegdate(TimeCastHandler.strCastdateTime(user.getRegdate()));
+        }
+        if (user.getUpdateddate()!=null && !"".equals(user.getUpdateddate())){
+            user.setUpdateddate(TimeCastHandler.strCastdateTime(user.getUpdateddate()));
+        }
+        if (user.getLastdate()!=null && !"".equals(user.getLastdate())){
+            user.setLastdate(TimeCastHandler.strCastdateTime(user.getLastdate()));
+        }
+        userService.add(user,code);
+        return new Result(true,StatusCode.OK,"注册成功");
     }
+
+
+    /**
+     * 邮箱验证
+     * @param email   邮箱
+     * @return        返回状态信息
+     */
+    @PostMapping("/sendEmail/{email}")
+    public Result sendEmail(@PathVariable String email){
+        try {
+            MailUtil.send(email, "验证码", userService.sendEmail(email));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result(true,StatusCode.OK,"发送成功");
+    }
+
+
+
+
+
+
+    /**
+     * 网易语音验证  发送短信
+     * @param mobile  手机号
+     * @return       返回状态信息
+     */
+    @PostMapping("/sendsms/{mobile}")
+    public Result sendSMS(@PathVariable String mobile){
+        try {
+            String sendCode = SendCode.sendCode(mobile);
+            System.out.println("sendCode = " + sendCode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("发送短信异常....");
+        }
+        return new Result(true,StatusCode.OK,"发送成功");
+    }
+
 
     /**
      * 根据用户id查询用户信息
@@ -132,6 +206,11 @@ public class UserController {
      */
     @DeleteMapping("/{userId}")
     public Result delete(@PathVariable String userId){
+        Claims claims = (Claims) request.getAttribute("admin_claims");
+        if (claims == null){
+            return new Result(false,StatusCode.ACCESSERROR,"无权删除");
+        }
+
         userService.delete(userId);
         return new Result(true,StatusCode.OK,"删除成功");
     }
@@ -204,22 +283,6 @@ public class UserController {
         }
     }
 
-    /**
-     * 网易语音验证  发送短信
-     * @param mobile  手机号
-     * @return       返回状态信息
-     */
-    @PostMapping("/sendsms/{mobile}")
-    public Result sendSMS(@PathVariable String mobile){
-        try {
-            String sendCode = SendCode.sendCode(mobile);
-            System.out.println("sendCode = " + sendCode);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("发送短信异常....");
-        }
-        return new Result(true,StatusCode.OK,"发送成功");
-    }
 
     /**
      * 关注某个用户
